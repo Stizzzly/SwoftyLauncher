@@ -17,6 +17,7 @@ pub mod conflicts;
 pub mod copies;
 pub mod crash;
 pub mod crash_report;
+pub mod data_move;
 pub mod data_usage;
 pub mod dbedit;
 pub mod disk;
@@ -83,6 +84,7 @@ pub mod updater;
 pub mod usage;
 pub mod vault;
 pub mod vdf;
+pub mod version;
 
 pub const STEAM_APP_ID: u32 = 3_059_520;
 pub const GAME_EXE: &str = "F1_25.exe";
