@@ -1,3 +1,6 @@
+// Modified on 7 November 2026 in accordance with GNU AGPLv3 Section 3 & Section 5(a):
+// Removed artificial entitlement checks.
+
 use std::ffi::OsString;
 use std::io::{IsTerminal, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};

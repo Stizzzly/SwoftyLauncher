@@ -2,6 +2,14 @@
 
 ## About this fork
 
+Modified on 7 November 2026 in accordance with GNU AGPLv3 Section 3 & Section 5(a):
+Removed artificial entitlement checks.
+
+The modification deletes `packages/core/src/entitlement.rs`, removes its launch
+and apply checks, and removes its module export and error variant. The changed
+Rust files carry the same dated notice. This fork remains licensed under
+GNU AGPLv3 or later; the original copyright and licence notices are preserved.
+
 This fork removes the launcher's entitlement gate: unknown-store refusal,
 emulator/crack filename detection, and the dedicated ownership-file hash check.
 The game and store clients keep their own licence checks. Addon installation,

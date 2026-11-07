@@ -1,3 +1,6 @@
+// Modified on 7 November 2026 in accordance with GNU AGPLv3 Section 3 & Section 5(a):
+// Removed artificial entitlement checks.
+
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
