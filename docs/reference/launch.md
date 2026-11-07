@@ -85,18 +85,16 @@ When the EA app doesn't come up, the launch stops with one of these messages:
 
 ## Copies Swofty plays
 
-Modded sessions run only on a copy Steam or the EA app installed. Before a session or `swofty apply` changes anything, the launcher checks that:
+This fork removes Swofty's entitlement gate from `swofty run` and `swofty apply`.
+The launcher no longer refuses a folder because its store is unknown, scans for
+emulator or crack filenames, or performs the dedicated size and SHA-1 comparison
+of `F1_25.exe` and `steam_api64.dll` for that gate. It no longer writes the
+`state/ownership-files.json` cache; an existing cache is unused.
 
-- The copy is a Steam copy or an EA app copy. A copy in any other folder is refused.
-- The game folder has none of the files Steam emulators and cracks leave: `steam_settings`, `steam_emu.ini`, `steam_api64_o.dll`, `steam_interfaces.txt`, `ColdClientLoader.ini`, `steamclient_loader_x64.exe`, `steamclient64.dll`, `OnlineFix64.dll`, `OnlineFix.ini`, `cream_api.ini`, `CODEX64.dll` and `SmartSteamEmu.ini`. A file in Steam's list for the install is never one of them.
-- `F1_25.exe` and `steam_api64.dll` match the size and SHA-1 in Steam's list, on a Steam copy whose list the launcher reads. A changed one opens **Your game files have been edited**; see [Game files changed outside Swofty](#game-files-changed-outside-swofty).
-- An EA app copy starts through the EA app.
-
-`swofty run` and `swofty apply` stop with the reason:
-
-```text
-swofty: this copy of F1 25 wasn't installed by Steam or the EA app, so it can't be played modded; Swofty runs only on a copy you own on Steam or the EA app
-```
+Store detection still selects the launch method, including the EA app hand-off.
+The game and store clients retain their own licence checks. The independent
+checks that protect addon installation, backups and restoration also remain;
+they can still report changed or missing game files as described below.
 
 ## Game files changed outside Swofty
 

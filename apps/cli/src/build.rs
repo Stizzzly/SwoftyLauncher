@@ -373,10 +373,6 @@ fn install_checked(
     crate::setup::gate(store)?;
     Blocked::clear(&store.root).ok();
     stock::Report::clear(&store.root).ok();
-    // A session's wrapper checked the copy before it got here.
-    if !session {
-        check_entitled(store, g)?;
-    }
     let depots = check_stock(store, g, out)?;
     let inst = Installer {
         session,
@@ -403,26 +399,6 @@ fn install_checked(
         Err(swofty_core::Error::Leftovers(found)) => Err(crate::recover::blocked(store, g, &found)),
         r => Ok(not_stock(store, g, r)?),
     }
-}
-
-/// Refuse a modded build or session on a copy no store checks the
-/// ownership of, and on a Steam copy whose game or Steam API files are not
-/// the ones Steam installed. Steam's list is only read here; a copy whose
-/// list can't be read is checked without it.
-pub fn check_entitled(store: &Store, g: &Game) -> Result<()> {
-    let depots = steam::find_game()
-        .filter(|i| i.dir == g.dir)
-        .and_then(|i| Depots::load(&i).ok());
-    swofty_core::entitlement::check(&g.dir, depots.as_ref())?;
-    let Some(depots) = depots else {
-        return Ok(());
-    };
-    let changed = swofty_core::entitlement::changed_files(&store.root, &g.dir, &depots)?;
-    if !changed.is_empty() {
-        stock::Report::new(changed.clone(), &g.dir).write(&store.root)?;
-        return Err(swofty_core::Error::NotStock(changed).into());
-    }
-    Ok(())
 }
 
 /// Check the game against Steam's manifests before anything is built from
@@ -869,6 +845,47 @@ mod tests {
         fn drop(&mut self) {
             std::fs::remove_dir_all(&self.root).ok();
         }
+    }
+
+    #[test]
+    fn apply_installs_and_restores_an_addon_in_an_unknown_store_folder() {
+        if loader_dir().is_some() {
+            return;
+        }
+        let h = Harness::new("apply-unknown-store");
+        assert_eq!(
+            swofty_core::install::Source::detect(&h.game.dir),
+            swofty_core::install::Source::Unknown
+        );
+        swofty_core::setup::reset(&h.store.root, &h.game, false).unwrap();
+        swofty_core::setup::finish(&h.store.root).unwrap();
+
+        install(&h.store, "default", &h.game, false, &|_| {}).unwrap();
+        assert_eq!(h.mip(), "mip-ferrari");
+        Installer::new(&h.store.root, &h.game).roll_back(false).unwrap();
+        assert!(!h.game.dir.join(MIP).exists());
+    }
+
+    #[test]
+    fn apply_leaves_unrelated_emulator_named_files_untouched() {
+        if loader_dir().is_some() {
+            return;
+        }
+        let h = Harness::new("apply-emulator-names");
+        std::fs::write(h.game.dir.join("EAJavelinInstaller_installscript.vdf"), "").unwrap();
+        std::fs::create_dir(h.game.dir.join("steam_settings")).unwrap();
+        let marker = h.game.dir.join("OnlineFix64.dll");
+        std::fs::write(&marker, "unrelated fixture").unwrap();
+        swofty_core::setup::reset(&h.store.root, &h.game, false).unwrap();
+        swofty_core::setup::finish(&h.store.root).unwrap();
+
+        install(&h.store, "default", &h.game, false, &|_| {}).unwrap();
+        assert_eq!(h.mip(), "mip-ferrari");
+        Installer::new(&h.store.root, &h.game).roll_back(false).unwrap();
+        assert!(!h.game.dir.join(MIP).exists());
+        assert_eq!(std::fs::read_to_string(marker).unwrap(), "unrelated fixture");
+        assert!(h.game.dir.join("steam_settings").is_dir());
+        assert!(!h.store.root.join("state/ownership-files.json").exists());
     }
 
     #[test]

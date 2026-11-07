@@ -44,7 +44,7 @@ The folder becomes the active copy. A folder with `__Installer/installerdata.xml
 
 An EA app copy needs `F1_25.exe` and `__Installer/installerdata.xml` in its folder.
 
-**Play** refuses a copy in any other folder: modded sessions run only on a copy Steam or the EA app installed. See [Copies Swofty plays](/reference/launch#copies-swofty-plays).
+This fork accepts an added game folder without requiring a recognised store source. See [Copies Swofty plays](/reference/launch#copies-swofty-plays) for the remaining launch and file-integrity requirements.
 
 The EA app's download folders are the `downloadinplacedir` lines in `%ProgramData%\EA Desktop\machine.ini` and `%LOCALAPPDATA%\Electronic Arts\EA Desktop\user_<id>.ini`.
 

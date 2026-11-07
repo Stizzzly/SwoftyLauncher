@@ -394,8 +394,6 @@ fn wrapper(store: &Store, profile: &str, args: &RunArgs, g: &Game) -> Result<Exi
     let lock = crate::recover::lock(store, &info)?;
     crate::recover::stale(store, &lock, g, Scope::All, &info)?;
     crate::offline::gate(store, false)?;
-    swofty_core::entitlement::check_store_start(&g.dir, args.via_ea)?;
-    crate::build::check_entitled(store, g)?;
     let version = swofty_core::exe_version::read(&g.dir.join(GAME_EXE));
     if let Some(d) = swofty_core::known_problems::outdated_exe(version.as_deref()) {
         say("warning", &format!("{}: {}", d.title, d.text()));
