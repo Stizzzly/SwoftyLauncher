@@ -2,6 +2,8 @@
 
 ## About this fork
 
+Upstream baseline: [v1.8.22](https://github.com/Swofty-Developments/SwoftyLauncher/releases/tag/v1.8.22), including the v1.8.21 and v1.8.22 updates, integrated on 7 November 2026.
+
 Modified on 7 November 2026 in accordance with GNU AGPLv3 Section 3 & Section 5(a):
 Removed artificial entitlement checks.
 
@@ -15,6 +17,8 @@ emulator/crack filename detection, and the dedicated ownership-file hash check.
 The game and store clients keep their own licence checks. Addon installation,
 backup and restoration integrity checks remain. See [launch behaviour](docs/reference/launch.md#copies-swofty-plays)
 for details.
+
+The upstream content-ownership API for addons and shared-session content compatibility checks are retained.
 
 Build this fork from source using the development commands below. The upstream
 installation guide and upstream releases distribute the original launcher.
