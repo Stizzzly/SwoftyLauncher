@@ -1,5 +1,16 @@
 # Swofty Launcher for F1 25
 
+## About this fork
+
+This fork removes the launcher's entitlement gate: unknown-store refusal,
+emulator/crack filename detection, and the dedicated ownership-file hash check.
+The game and store clients keep their own licence checks. Addon installation,
+backup and restoration integrity checks remain. See [launch behaviour](docs/reference/launch.md#copies-swofty-plays)
+for details.
+
+Build this fork from source using the development commands below. The upstream
+installation guide and upstream releases distribute the original launcher.
+
 A launcher and mod loader for F1 25 on Windows and Linux. Addons change the game's data and engine, mods and community tracks drop onto the Mods page, and profiles keep separate setups.
 
 ![The launcher's Addons page with SwoftyMod, Team Simplified, Custom Grid Size and an AlphaTauri livery addon](docs/public/screenshots/hero-launcher.png)
