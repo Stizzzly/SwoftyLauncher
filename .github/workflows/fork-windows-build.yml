@@ -1,0 +1,136 @@
+name: Fork Windows package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  native:
+    name: Native loader
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Use every runner core
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/taskset" <<'EOF'
+          #!/bin/sh
+          [ "$1" = -c ] && shift 2
+          exec "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/taskset"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+          use-cache: false
+          use-tool-cache: true
+      - uses: actions/cache@v6
+        with:
+          path: native/build/zig-cache
+          key: fork-zig-${{ runner.os }}-0.16.0-${{ hashFiles('native/**', 'packages/sdk/include/**') }}
+          restore-keys: fork-zig-${{ runner.os }}-0.16.0-
+      - name: Build native loader
+        run: native/build.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fork-native
+          path: native/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows binaries and package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          cache: false
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: fork-windows-release
+      - name: Build CLI and launcher
+        run: cargo build --locked --release -p swofty-cli -p swofty-launcher
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Build and test Swofty UI
+        run: |
+          python -m pip install pyinstaller==6.22.3
+          python tools/swofty-ui/build.py
+          dist/swofty-ui/swofty-ui.exe --self-test
+      - name: CLI smoke test
+        run: |
+          target/release/swofty.exe --version
+          if ($LASTEXITCODE -ne 0) { throw 'CLI version check failed' }
+          target/release/swofty.exe --help
+          if ($LASTEXITCODE -ne 0) { throw 'CLI help check failed' }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fork-windows-binaries
+          path: |
+            target/release/swofty.exe
+            target/release/swofty-launcher.exe
+            dist/swofty-ui/swofty-ui.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    name: Package Windows release
+    needs: [native, windows]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: fork-windows-binaries
+      - uses: actions/download-artifact@v8
+        with:
+          name: fork-native
+          path: native/dist
+      - name: Fetch pinned upstream DXC
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          GITHUB_REPOSITORY=Swofty-Developments/SwoftyLauncher tools/dxc/fetch.sh dxc-windows-x86_64.tar.gz
+          test -f dxc/VERSION
+      - name: Package binaries, corresponding source and checksums
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "([^"]+)"').Matches[0].Groups[1].Value
+          $short = $env:GITHUB_SHA.Substring(0, 8)
+          $name = "swofty-launcher-v$version-fork-$short-windows-x86_64"
+          New-Item -ItemType Directory -Force "$name/bin", "$name/loader", "artifacts" | Out-Null
+          Copy-Item target/release/swofty.exe, target/release/swofty-launcher.exe, dist/swofty-ui/swofty-ui.exe "$name/bin/"
+          Copy-Item -Recurse native/dist/* "$name/loader/"
+          Copy-Item -Recurse dxc "$name/dxc"
+          Copy-Item LICENSE, README.md, THIRD_PARTY.md "$name/"
+          @{
+            source_commit = $env:GITHUB_SHA
+            source_url = "https://github.com/$env:GITHUB_REPOSITORY/tree/$env:GITHUB_SHA"
+            build_run = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            built_at_utc = (Get-Date).ToUniversalTime().ToString('o')
+            version = $version
+            variant = 'Fork without launcher entitlement checks'
+            diagnostics_endpoints = 'SWOFTY_LOGS_URL and SWOFTY_USAGE_URL not configured'
+          } | ConvertTo-Json | Set-Content "$name/BUILD-INFO.json" -Encoding utf8
+          Compress-Archive -Path $name -DestinationPath "artifacts/$name.zip"
+          git archive --format=zip --prefix="swofty-launcher-source/" --output="artifacts/swofty-launcher-v$version-fork-$short-source.zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
+          $lines = Get-ChildItem artifacts/*.zip | Sort-Object Name | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          }
+          $lines | Set-Content artifacts/SHA256SUMS -Encoding ascii
+      - uses: actions/upload-artifact@v7
+        with:
+          name: swofty-launcher-windows-fork-package
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
