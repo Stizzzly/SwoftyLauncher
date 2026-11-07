@@ -65,3 +65,8 @@ See the [development guide](https://f1.swofty.net/reference/development) for bui
 ## Credits
 
 - [xanpavle](https://github.com/xanpavle) for [F1 25 RE-Optimization](https://github.com/xanpavle/F1-25-RE-Optimization), the renderer tuning, engine overrides and GPU-aware upscaler choice behind the `xanpavle.re-optimization` addon in the Addon Browser.
+
+## Contributors to this fork
+
+- [Stizzzly](https://github.com/Stizzzly) — fork owner and direction of the changes.
+- [Codex](https://github.com/codex), OpenAI's coding agent — AI-assisted code changes, regression tests, documentation and modification notices, under Stizzzly's direction.
